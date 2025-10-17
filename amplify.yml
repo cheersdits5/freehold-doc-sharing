@@ -6,8 +6,14 @@ frontend:
         - cd frontend
         - npm ci
         - cp .env.production .env
+        - echo "Environment file content:"
+        - cat .env
+        - echo "Checking if VITE_API_BASE_URL is set:"
+        - grep VITE_API_BASE_URL .env || echo "VITE_API_BASE_URL not found"
     build:
       commands:
+        - echo "Building with environment:"
+        - echo "VITE_API_BASE_URL=$VITE_API_BASE_URL"
         - npx vite build
   artifacts:
     baseDirectory: frontend/dist
