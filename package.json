@@ -1,0 +1,37 @@
+{
+  "name": "freehold-document-sharing",
+  "version": "1.0.0",
+  "description": "Secure document sharing platform for freehold community members",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:integration": "npm run test --workspace=frontend -- --run src/test/integration.test.ts",
+    "test:e2e": "npm run test --workspace=frontend -- --run src/test/e2e-workflow.test.ts",
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
+    "verify-setup": "node scripts/verify-setup.js",
+    "test-connection": "node test-connection.js",
+    "test-integration": "node scripts/test-integration.js",
+    "deploy:backend": "npm run deploy --workspace=backend",
+    "deploy:frontend": "npm run build:prod --workspace=frontend",
+    "test-deployment": "node test-deployment.js",
+    "configure-deployment": "npm run configure-api --workspace=backend && npm run configure-prod --workspace=frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

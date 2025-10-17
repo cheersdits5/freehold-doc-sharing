@@ -1,0 +1,92 @@
+service: freehold-document-sharing-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: production
+    JWT_SECRET: ${env:JWT_SECRET, 'default-jwt-secret-change-in-production'}
+    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET, 'default-refresh-secret-change-in-production'}
+    DB_HOST: ${env:DB_HOST, ''}
+    DB_PORT: ${env:DB_PORT, '5432'}
+    DB_NAME: ${env:DB_NAME, ''}
+    DB_USER: ${env:DB_USER, ''}
+    DB_PASSWORD: ${env:DB_PASSWORD, ''}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, ''}
+    AWS_REGION: ${env:AWS_REGION, 'us-east-1'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 
+            - 'arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/*:*:*'
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:PutObjectAcl
+          Resource: 
+            - 'arn:aws:s3:::${env:S3_BUCKET_NAME, "freehold-documents-*"}/*'
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+          Resource: 
+            - 'arn:aws:s3:::${env:S3_BUCKET_NAME, "freehold-documents-*"}'
+
+functions:
+  api:
+    handler: src/simple-lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Requested-With
+            allowCredentials: true
+          integration: lambda-proxy
+      - http:
+          path: /
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Requested-With
+            allowCredentials: true
+          integration: lambda-proxy
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3001
+  apiGateway:
+    restApiId: ${env:API_GATEWAY_REST_API_ID, ''}
+    restApiRootResourceId: ${env:API_GATEWAY_ROOT_RESOURCE_ID, ''}
+    description: 'Freehold Document Sharing API Gateway'
+    binaryMediaTypes:
+      - 'multipart/form-data'
+      - 'application/octet-stream'
+      - 'image/*'
+      - 'application/pdf'
