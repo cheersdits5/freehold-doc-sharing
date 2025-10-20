@@ -3,7 +3,7 @@ import { tokenStorage } from './tokenStorage';
 import { tokenRefreshManager } from './tokenRefresh';
 import { getErrorMessage } from '../contexts/ErrorContext';
 
-const API_BASE_URL = 'https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod/api';
+const API_BASE_URL = 'https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -47,6 +47,13 @@ apiClient.interceptors.response.use(
     // If the error is 401 and we haven't already tried to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      // Skip automatic refresh for mock tokens to prevent loops
+      const currentToken = tokenStorage.getToken();
+      if (currentToken && currentToken.startsWith('mock-jwt-token')) {
+        console.log('Skipping token refresh for mock token');
+        return Promise.reject(error);
+      }
 
       try {
         const newToken = await tokenRefreshManager.refreshToken();
