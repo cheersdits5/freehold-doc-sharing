@@ -190,6 +190,49 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// Mock token refresh
+app.post('/api/auth/refresh', (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken && refreshToken.startsWith('mock-refresh-token')) {
+      const tokenData = {
+        token: 'mock-jwt-token-' + Date.now(),
+        refreshToken: 'mock-refresh-token-' + Date.now(),
+        expiresIn: config.JWT_EXPIRES_IN,
+        user: {
+          id: '1',
+          email: 'admin@freehold.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          role: 'admin'
+        }
+      };
+      
+      log.info('Token refresh successful', { refreshToken });
+      res.json(tokenData);
+    } else {
+      log.warn('Token refresh failed - invalid refresh token', { refreshToken });
+      res.status(401).json({
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'Invalid refresh token',
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+  } catch (error) {
+    log.error('Token refresh error', error);
+    res.status(500).json({
+      error: {
+        code: 'REFRESH_ERROR',
+        message: 'Token refresh failed',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+});
+
 // Mock token validation
 app.get('/api/auth/validate', (req, res) => {
   const authHeader = req.headers.authorization;
