@@ -33,7 +33,7 @@ const s3 = new AWS.S3({
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'freehold-documents-prod';
 
-// In-memory storage for document metadata
+// In-memory storage for document metadata (will be loaded from S3)
 let documents: any[] = [];
 let categories = [
   { id: '1', name: 'Meeting Minutes', description: 'Board meeting minutes and agendas', documentCount: 0 },
@@ -41,6 +41,42 @@ let categories = [
   { id: '3', name: 'Legal Documents', description: 'Contracts and legal paperwork', documentCount: 0 },
   { id: '4', name: 'General', description: 'General community documents', documentCount: 0 }
 ];
+
+const METADATA_KEY = 'documents-metadata.json';
+
+// Load documents metadata from S3
+async function loadDocuments() {
+  try {
+    const params = {
+      Bucket: BUCKET_NAME,
+      Key: METADATA_KEY
+    };
+    const result = await s3.getObject(params).promise();
+    if (result.Body) {
+      documents = JSON.parse(result.Body.toString());
+      console.log('Loaded documents from S3:', documents.length);
+    }
+  } catch (error) {
+    console.log('No existing documents metadata found, starting fresh');
+    documents = [];
+  }
+}
+
+// Save documents metadata to S3
+async function saveDocuments() {
+  try {
+    const params = {
+      Bucket: BUCKET_NAME,
+      Key: METADATA_KEY,
+      Body: JSON.stringify(documents),
+      ContentType: 'application/json'
+    };
+    await s3.upload(params).promise();
+    console.log('Saved documents metadata to S3');
+  } catch (error) {
+    console.error('Failed to save documents metadata:', error);
+  }
+}
 
 // Auth middleware (simplified)
 const authMiddleware = (req: any, res: any, next: any) => {
@@ -63,7 +99,13 @@ app.get('/api/categories', authMiddleware, (req, res) => {
 });
 
 // Files list endpoint
-app.get('/api/files', authMiddleware, (req, res) => {
+app.get('/api/files', authMiddleware, async (req, res) => {
+  // Load documents from S3 on each request
+  await loadDocuments();
+  
+  console.log('Files endpoint called, documents array length:', documents.length);
+  console.log('Current documents:', documents);
+  
   const { page = 1, limit = 10, search, category } = req.query;
   
   let filteredDocs = [...documents];
@@ -82,6 +124,8 @@ app.get('/api/files', authMiddleware, (req, res) => {
   const startIndex = (Number(page) - 1) * Number(limit);
   const endIndex = startIndex + Number(limit);
   const paginatedDocs = filteredDocs.slice(startIndex, endIndex);
+  
+  console.log('Returning documents:', paginatedDocs);
   
   res.json({
     documents: paginatedDocs,
@@ -131,7 +175,15 @@ app.post('/api/files/upload', authMiddleware, upload.single('file'), async (req,
       tags: []
     };
 
+    // Load existing documents first
+    await loadDocuments();
+    
     documents.push(document);
+    console.log('Document added, total documents now:', documents.length);
+    console.log('Added document:', document);
+
+    // Save updated documents list to S3
+    await saveDocuments();
 
     // Update category count
     const category = categories.find(cat => cat.id === document.category);
@@ -156,6 +208,9 @@ app.post('/api/files/upload', authMiddleware, upload.single('file'), async (req,
 // File download endpoint
 app.get('/api/files/:id/download', authMiddleware, async (req, res) => {
   try {
+    // Load documents from S3
+    await loadDocuments();
+    
     const document = documents.find(doc => doc.id === req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'File not found' });
