@@ -7,15 +7,12 @@ provider:
   stage: ${opt:stage, 'dev'}
   environment:
     NODE_ENV: production
-    JWT_SECRET: ${env:JWT_SECRET, 'default-jwt-secret-change-in-production'}
-    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET, 'default-refresh-secret-change-in-production'}
-    DB_HOST: ${env:DB_HOST, ''}
-    DB_PORT: ${env:DB_PORT, '5432'}
-    DB_NAME: ${env:DB_NAME, ''}
-    DB_USER: ${env:DB_USER, ''}
-    DB_PASSWORD: ${env:DB_PASSWORD, ''}
-    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, ''}
-    AWS_REGION: ${env:AWS_REGION, 'us-east-1'}
+    JWT_SECRET: 'freehold-jwt-secret-2024-production-key'
+    JWT_REFRESH_SECRET: 'freehold-refresh-secret-2024-production-key'
+    AWS_REGION: 'eu-west-2'
+    S3_BUCKET_NAME: 'freehold-documents-${self:provider.stage}-${aws:accountId}'
+    CORS_ORIGIN: 'https://main.d2n7j8wrtqbawq.amplifyapp.com'
+    MAX_FILE_SIZE: '52428800'
   iam:
     role:
       statements:
@@ -33,12 +30,19 @@ provider:
             - s3:DeleteObject
             - s3:PutObjectAcl
           Resource: 
-            - 'arn:aws:s3:::${env:S3_BUCKET_NAME, "freehold-documents-*"}/*'
+            - 'arn:aws:s3:::freehold-documents-${self:provider.stage}-${aws:accountId}/*'
         - Effect: Allow
           Action:
             - s3:ListBucket
           Resource: 
-            - 'arn:aws:s3:::${env:S3_BUCKET_NAME, "freehold-documents-*"}'
+            - 'arn:aws:s3:::freehold-documents-${self:provider.stage}-${aws:accountId}'
+        - Effect: Allow
+          Action:
+            - s3:CreateBucket
+            - s3:PutBucketPolicy
+            - s3:PutBucketCors
+          Resource: 
+            - 'arn:aws:s3:::freehold-documents-${self:provider.stage}-${aws:accountId}'
 
 functions:
   api:
@@ -74,6 +78,32 @@ functions:
               - X-Requested-With
             allowCredentials: true
           integration: lambda-proxy
+
+resources:
+  Resources:
+    DocumentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: freehold-documents-${self:provider.stage}-${aws:accountId}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              AllowedOrigins:
+                - "https://main.d2n7j8wrtqbawq.amplifyapp.com"
+                - "http://localhost:3000"
+              MaxAge: 3000
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
 
 plugins:
   - serverless-offline

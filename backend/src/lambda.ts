@@ -103,8 +103,13 @@ let dbInitialized = false;
 const initDB = async () => {
   if (!dbInitialized) {
     try {
-      await initializeDatabase();
-      logger.info('Database initialized successfully');
+      // Only initialize database if DB_HOST is configured
+      if (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') {
+        await initializeDatabase();
+        logger.info('Database initialized successfully');
+      } else {
+        logger.info('Database not configured, skipping database initialization');
+      }
       dbInitialized = true;
     } catch (error) {
       logger.error('Failed to initialize database', error as Error);
