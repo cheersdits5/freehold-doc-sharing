@@ -11,10 +11,6 @@ import {
   ListItemText,
   ListItemIcon,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   TextField,
   Chip,
 } from '@mui/material';
@@ -43,7 +39,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   
   const [uploadQueue, setUploadQueue] = useState<FileUploadProgress[]>([]);
   const [description, setDescription] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: FileUploadProgress[] = acceptedFiles.map(file => {
@@ -76,8 +71,11 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       return;
     }
 
-    if (!selectedCategory) {
-      showError('Please select a category');
+    // Default to "General" category or first available category
+    const categoryToUse = categories.find(cat => cat.name === 'General')?.id || categories[0]?.id;
+    
+    if (!categoryToUse) {
+      showError('No categories available. Please contact administrator.');
       return;
     }
 
@@ -100,7 +98,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
           const result = await FileService.uploadFile(
             item!.file,
-            selectedCategory,
+            categoryToUse,
             description,
             (progress) => {
               setUploadQueue(prev => 
@@ -146,7 +144,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
         // Clear successful uploads
         setUploadQueue(prev => prev.filter(item => item.status === 'error'));
         setDescription('');
-        setSelectedCategory('');
       }
 
       if (errorCount > 0) {
@@ -233,24 +230,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       {/* Upload Configuration */}
       {uploadQueue.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="category-select-label">Category *</InputLabel>
-            <Select
-              labelId="category-select-label"
-              value={selectedCategory}
-              label="Category *"
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              disabled={isUploading}
-              required
-            >
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
           <TextField
             fullWidth
             label="Description (optional)"

@@ -235,7 +235,7 @@ export function DocumentList({
               <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Category</TableCell>
               <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Size</TableCell>
               <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Uploaded</TableCell>
-              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Tags</TableCell>
+              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Description</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -271,18 +271,6 @@ export function DocumentList({
                         >
                           {document.originalName}
                         </Typography>
-                        {document.description && (
-                          <Typography 
-                            variant="caption" 
-                            color="text.secondary"
-                            sx={{ 
-                              display: { xs: 'block', sm: 'block' },
-                              wordBreak: 'break-word'
-                            }}
-                          >
-                            {document.description}
-                          </Typography>
-                        )}
                         {/* Show category and size on mobile */}
                         <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: 0.5 }}>
                           <Chip
@@ -316,24 +304,16 @@ export function DocumentList({
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
-                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                      {document.tags.slice(0, 2).map((tag, index) => (
-                        <Chip
-                          key={index}
-                          label={tag}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                        />
-                      ))}
-                      {document.tags.length > 2 && (
-                        <Chip
-                          label={`+${document.tags.length - 2}`}
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        maxWidth: '200px'
+                      }}
+                    >
+                      {document.description || '-'}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
