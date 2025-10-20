@@ -10,7 +10,7 @@ export class FileService {
   ): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('category', category);
+    formData.append('categoryId', category);
     if (description) {
       formData.append('description', description);
     }

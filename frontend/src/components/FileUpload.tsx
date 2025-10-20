@@ -26,30 +26,24 @@ import {
   Error,
 } from '@mui/icons-material';
 import { FileService } from '../services/fileService';
-import { FileUploadProgress, Category } from '../types/document';
+import { FileUploadProgress } from '../types/document';
 import { useError } from '../contexts/ErrorContext';
 import { ProgressWithLabel, ButtonLoading } from './LoadingSpinner';
-import { useValidation } from './FormValidation';
 import { useFormSubmission } from '../hooks/useLoading';
+import { useCategories } from '../hooks/useCategories';
 
 interface FileUploadProps {
-  categories: Category[];
   onUploadComplete?: (uploadedFiles: any[]) => void;
 }
 
-export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
+export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const { showError, showSuccess } = useError();
   const { submitting: isUploading, handleSubmit } = useFormSubmission();
+  const { categories } = useCategories();
   
   const [uploadQueue, setUploadQueue] = useState<FileUploadProgress[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-
-  // Validation for category selection
-  const categoryValidation = useValidation({
-    required: true,
-    requiredMessage: 'Please select a category for your files',
-  });
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: FileUploadProgress[] = acceptedFiles.map(file => {
@@ -76,15 +70,14 @@ export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
   };
 
   const uploadFiles = async () => {
-    // Validate category selection
-    if (!categoryValidation.validate(selectedCategory)) {
-      showError('Please select a category for your files');
-      return;
-    }
-
     const validFiles = uploadQueue.filter(item => item.status !== 'error');
     if (validFiles.length === 0) {
       showError('No valid files to upload');
+      return;
+    }
+
+    if (!selectedCategory) {
+      showError('Please select a category');
       return;
     }
 
@@ -153,6 +146,7 @@ export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
         // Clear successful uploads
         setUploadQueue(prev => prev.filter(item => item.status === 'error'));
         setDescription('');
+        setSelectedCategory('');
       }
 
       if (errorCount > 0) {
@@ -240,14 +234,14 @@ export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
       {uploadQueue.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="category-select-label">Category</InputLabel>
+            <InputLabel id="category-select-label">Category *</InputLabel>
             <Select
               labelId="category-select-label"
               value={selectedCategory}
+              label="Category *"
               onChange={(e) => setSelectedCategory(e.target.value)}
-              label="Category"
               disabled={isUploading}
-              aria-describedby="category-helper-text"
+              required
             >
               {categories.map((category) => (
                 <MenuItem key={category.id} value={category.id}>
@@ -256,7 +250,7 @@ export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
               ))}
             </Select>
           </FormControl>
-
+          
           <TextField
             fullWidth
             label="Description (optional)"
@@ -347,7 +341,7 @@ export function FileUpload({ categories, onUploadComplete }: FileUploadProps) {
           <Button
             variant="contained"
             onClick={uploadFiles}
-            disabled={isUploading || !selectedCategory}
+            disabled={isUploading}
             startIcon={<CloudUpload />}
             aria-label={`Upload ${uploadQueue.filter(f => f.status !== 'error').length} files`}
             sx={{ flex: { xs: 1, sm: 'none' } }}
