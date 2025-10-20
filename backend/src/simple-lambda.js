@@ -255,21 +255,21 @@ app.get('/api/categories', (req, res) => {
       id: '1',
       name: 'Meeting Minutes',
       description: 'Board meeting minutes and agendas',
-      documentCount: 5,
+      documentCount: 0,
       createdAt: new Date().toISOString()
     },
     {
       id: '2',
       name: 'Financial Reports',
       description: 'Financial statements and budgets',
-      documentCount: 3,
+      documentCount: 0,
       createdAt: new Date().toISOString()
     },
     {
       id: '3',
       name: 'Legal Documents',
       description: 'Contracts and legal paperwork',
-      documentCount: 2,
+      documentCount: 0,
       createdAt: new Date().toISOString()
     }
   ]);
@@ -283,21 +283,10 @@ app.get('/api/files', (req, res) => {
   }
 
   res.json({
-    documents: [
-      {
-        id: '1',
-        originalName: 'sample-document.pdf',
-        fileSize: 1024000,
-        mimeType: 'application/pdf',
-        category: '1',
-        description: 'Sample document for testing',
-        tags: ['sample', 'test'],
-        uploadedAt: new Date().toISOString()
-      }
-    ],
-    total: 1,
+    documents: [],
+    total: 0,
     page: 1,
-    totalPages: 1
+    totalPages: 0
   });
 });
 
