@@ -32,20 +32,19 @@ import {
   Image,
 } from '@mui/icons-material';
 import { FileService } from '../services/fileService';
-import { DocumentInfo, FileFilters, Category } from '../types/document';
+import { DocumentInfo, FileFilters } from '../types/document';
+import { useCategories } from '../hooks/useCategories';
 
 interface DocumentListProps {
-  categories: Category[];
+  refreshTrigger?: number | undefined;
   selectedCategory?: string | undefined;
   onCategoryChange?: (categoryId: string | undefined) => void;
-  refreshTrigger?: number | undefined;
 }
 
 export function DocumentList({ 
-  categories, 
-  selectedCategory, 
-  onCategoryChange,
-  refreshTrigger 
+  refreshTrigger,
+  selectedCategory,
+  onCategoryChange
 }: DocumentListProps) {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +55,9 @@ export function DocumentList({
   const [totalCount, setTotalCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedDocument, setSelectedDocument] = useState<DocumentInfo | null>(null);
+  
+  // Load categories
+  const { categories } = useCategories();
 
   const fetchDocuments = async () => {
     try {

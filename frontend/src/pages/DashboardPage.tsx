@@ -8,8 +8,6 @@ import {
   Button,
   Container,
   Paper,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthSession } from '../hooks/useAuthSession';
@@ -19,6 +17,7 @@ export function DashboardPage() {
   const { user, logout } = useAuth();
   useAuthSession(); // Initialize session management
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
 
   const handleLogout = () => {
     logout();
@@ -28,6 +27,10 @@ export function DashboardPage() {
     console.log('Files uploaded successfully:', uploadedFiles);
     // Refresh document list
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCategoryChange = (categoryId: string | undefined) => {
+    setSelectedCategory(categoryId);
   };
 
   return (
@@ -116,6 +119,8 @@ export function DashboardPage() {
               
               <DocumentList
                 refreshTrigger={refreshTrigger}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
               />
             </Paper>
         </Box>
