@@ -2,8 +2,7 @@ import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
@@ -28,7 +27,7 @@ const upload = multer({
 });
 
 // S3 client
-const s3Client = new S3Client({
+const s3 = new AWS.S3({
   region: process.env.AWS_REGION || 'eu-west-2'
 });
 
@@ -104,7 +103,7 @@ app.post('/api/files/upload', authMiddleware, upload.single('file'), async (req,
     const fileName = `${fileId}-${req.file.originalname}`;
     
     // Upload to S3
-    const uploadCommand = new PutObjectCommand({
+    const uploadParams = {
       Bucket: BUCKET_NAME,
       Key: fileName,
       Body: req.file.buffer,
@@ -114,9 +113,9 @@ app.post('/api/files/upload', authMiddleware, upload.single('file'), async (req,
         uploadedBy: req.user.id,
         categoryId: categoryId || '4' // Default to General
       }
-    });
+    };
 
-    await s3Client.send(uploadCommand);
+    await s3.upload(uploadParams).promise();
 
     // Store metadata in memory
     const document = {
@@ -162,12 +161,13 @@ app.get('/api/files/:id/download', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const command = new GetObjectCommand({
+    const params = {
       Bucket: BUCKET_NAME,
-      Key: document.fileName
-    });
+      Key: document.fileName,
+      Expires: 900 // 15 minutes
+    };
 
-    const downloadUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+    const downloadUrl = s3.getSignedUrl('getObject', params);
     
     res.json({ downloadUrl });
   } catch (error) {
