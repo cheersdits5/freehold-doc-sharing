@@ -232,44 +232,169 @@ app.get('/api/categories', (req, res) => {
   ]);
 });
 
-// Mock files endpoint
-app.get('/api/files', (req, res) => {
+// Real files endpoint with S3 integration
+app.get('/api/files', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer mock-jwt-token')) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  res.json({
-    documents: [
-      {
-        id: '1',
-        originalName: 'sample-document.pdf',
-        fileSize: 1024000,
-        mimeType: 'application/pdf',
-        category: '1',
-        description: 'Sample document for testing',
-        tags: ['sample', 'test'],
-        uploadedAt: new Date().toISOString()
-      }
-    ],
-    total: 1,
-    page: 1,
-    totalPages: 1
-  });
+  try {
+    const AWS = require('aws-sdk');
+    const s3 = new AWS.S3({ region: process.env.AWS_REGION || 'eu-west-2' });
+    const bucketName = process.env.S3_BUCKET_NAME || 'freehold-documents-prod-${aws:accountId}';
+    
+    try {
+      const params = {
+        Bucket: bucketName,
+        Key: 'documents-metadata.json'
+      };
+      const result = await s3.getObject(params).promise();
+      const documents = JSON.parse(result.Body.toString());
+      
+      log.info('Loaded documents from S3', { count: documents.length });
+      
+      res.json({
+        documents: documents,
+        total: documents.length,
+        page: 1,
+        totalPages: Math.ceil(documents.length / 10)
+      });
+    } catch (error) {
+      // No documents file exists yet, return empty
+      log.info('No documents metadata found, returning empty list');
+      res.json({
+        documents: [],
+        total: 0,
+        page: 1,
+        totalPages: 0
+      });
+    }
+  } catch (error) {
+    log.error('Error loading documents', error);
+    res.status(500).json({ error: 'Failed to load documents' });
+  }
 });
 
-// Mock file upload
-app.post('/api/files/upload', (req, res) => {
+// Real file upload with S3 integration
+app.post('/api/files/upload', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer mock-jwt-token')) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  res.json({
-    id: 'mock-file-' + Date.now(),
-    message: 'File uploaded successfully (mock)',
-    fileName: 'uploaded-file.pdf'
-  });
+  try {
+    const multer = require('multer');
+    const { v4: uuidv4 } = require('uuid');
+    const AWS = require('aws-sdk');
+    
+    const s3 = new AWS.S3({ region: process.env.AWS_REGION || 'eu-west-2' });
+    const bucketName = process.env.S3_BUCKET_NAME || 'freehold-documents-prod-${aws:accountId}';
+    
+    // Configure multer for memory storage
+    const upload = multer({ 
+      storage: multer.memoryStorage(),
+      limits: { fileSize: config.MAX_FILE_SIZE }
+    });
+    
+    // Parse multipart form data
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        log.error('Multer error', err);
+        return res.status(400).json({ error: 'File upload error: ' + err.message });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
+      
+      const fileId = uuidv4();
+      const fileName = `${fileId}-${req.file.originalname}`;
+      
+      try {
+        log.info('Starting file upload', { 
+          fileName: req.file.originalname, 
+          size: req.file.size,
+          type: req.file.mimetype 
+        });
+        
+        // Upload file to S3
+        const uploadParams = {
+          Bucket: bucketName,
+          Key: fileName,
+          Body: req.file.buffer,
+          ContentType: req.file.mimetype,
+          Metadata: {
+            originalName: req.file.originalname,
+            uploadedBy: 'user1',
+            categoryId: req.body.categoryId || '4'
+          }
+        };
+        
+        await s3.upload(uploadParams).promise();
+        log.info('File uploaded to S3 successfully', { fileName });
+        
+        // Load existing documents metadata
+        let documents = [];
+        try {
+          const metadataParams = {
+            Bucket: bucketName,
+            Key: 'documents-metadata.json'
+          };
+          const result = await s3.getObject(metadataParams).promise();
+          documents = JSON.parse(result.Body.toString());
+          log.info('Loaded existing documents metadata', { count: documents.length });
+        } catch (error) {
+          log.info('No existing metadata found, starting fresh');
+          documents = [];
+        }
+        
+        // Add new document to metadata
+        const document = {
+          id: fileId,
+          fileName: fileName,
+          originalName: req.file.originalname,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype,
+          category: req.body.categoryId || '4',
+          uploadedBy: 'user1',
+          uploadedAt: new Date().toISOString(),
+          description: req.body.description || '',
+          tags: []
+        };
+        
+        documents.push(document);
+        log.info('Added document to metadata', { documentId: fileId, totalDocs: documents.length });
+        
+        // Save updated metadata to S3
+        const saveParams = {
+          Bucket: bucketName,
+          Key: 'documents-metadata.json',
+          Body: JSON.stringify(documents, null, 2),
+          ContentType: 'application/json'
+        };
+        
+        await s3.upload(saveParams).promise();
+        log.info('Saved updated metadata to S3');
+        
+        res.json({
+          id: fileId,
+          fileName: fileName,
+          fileSize: req.file.size,
+          uploadedAt: document.uploadedAt,
+          s3Key: fileName
+        });
+        
+      } catch (error) {
+        log.error('Upload processing error', error);
+        res.status(500).json({ error: 'Upload failed: ' + error.message });
+      }
+    });
+    
+  } catch (error) {
+    log.error('Upload setup error', error);
+    res.status(500).json({ error: 'Upload setup failed: ' + error.message });
+  }
 });
 
 // Global error handler
