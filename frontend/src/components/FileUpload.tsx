@@ -71,8 +71,11 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       return;
     }
 
-    // Default to "General" category or first available category
-    const categoryToUse = categories.find(cat => cat.name === 'General')?.id || categories[0]?.id;
+    // Default to first available category (since there's no "General" category)
+    const categoryToUse = categories[0]?.id;
+    
+    console.log('Categories available:', categories);
+    console.log('Using category ID:', categoryToUse);
     
     if (!categoryToUse) {
       showError('No categories available. Please contact administrator.');
@@ -96,11 +99,14 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
             )
           );
 
+          console.log('Uploading file:', item.file.name, 'to category:', categoryToUse);
+          
           const result = await FileService.uploadFile(
             item!.file,
             categoryToUse,
             description,
             (progress) => {
+              console.log('Upload progress:', progress);
               setUploadQueue(prev => 
                 prev.map((file, index) => 
                   index === i ? { ...file, progress } : file
@@ -108,6 +114,8 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
               );
             }
           );
+
+          console.log('Upload result:', result);
 
           // Update status to completed
           setUploadQueue(prev => 
@@ -120,6 +128,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
           successCount++;
         } catch (error: unknown) {
           // Update status to error
+          console.error('Upload error:', error);
           let errorMessage = 'Upload failed';
           if (error && typeof error === 'object' && 'message' in error) {
             errorMessage = String(error.message);
