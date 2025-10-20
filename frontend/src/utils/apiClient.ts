@@ -3,7 +3,7 @@ import { tokenStorage } from './tokenStorage';
 import { tokenRefreshManager } from './tokenRefresh';
 import { getErrorMessage } from '../contexts/ErrorContext';
 
-const API_BASE_URL = 'https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod';
+const API_BASE_URL = 'https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod/api';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({

@@ -94,31 +94,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Check for existing token on app load
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initializeAuth = () => {
       const token = tokenStorage.getToken();
       
       if (token) {
-        // Temporarily skip token validation for mock API
-        const isValid = true; // await authService.validateToken(token);
-        if (isValid) {
-          // In a real app, you'd decode the token or fetch user info
-          // For now, we'll set a basic authenticated state
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: {
-              user: {
-                id: 'temp',
-                email: 'temp@example.com',
-                firstName: 'User',
-                lastName: 'Name',
-                role: 'member',
-              },
-              token,
+        // For mock API, just restore the session without validation
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: {
+            user: {
+              id: '1',
+              email: 'admin@freehold.com',
+              firstName: 'Admin',
+              lastName: 'User',
+              role: 'admin',
             },
-          });
-        } else {
-          tokenStorage.clearTokens();
-        }
+            token,
+          },
+        });
       }
       
       dispatch({ type: 'SET_LOADING', payload: false });
