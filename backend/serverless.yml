@@ -42,7 +42,7 @@ provider:
 
 functions:
   api:
-    handler: src/simple-lambda.handler
+    handler: src/lambda.handler
     events:
       - http:
           path: /{proxy+}
