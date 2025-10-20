@@ -66,7 +66,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   const uploadFiles = async () => {
     console.log('Upload button clicked!');
-    alert('Upload function called - check console for details');
     
     const validFiles = uploadQueue.filter(item => item.status !== 'error');
     if (validFiles.length === 0) {

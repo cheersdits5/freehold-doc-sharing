@@ -25,8 +25,10 @@ export function DashboardPage() {
 
   const handleUploadComplete = (uploadedFiles: any[]) => {
     console.log('Files uploaded successfully:', uploadedFiles);
-    // Refresh document list
-    setRefreshTrigger(prev => prev + 1);
+    // Refresh document list with a small delay to ensure backend processing is complete
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 1000);
   };
 
   const handleCategoryChange = (categoryId: string | undefined) => {
