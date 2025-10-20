@@ -46,7 +46,7 @@ provider:
 
 functions:
   api:
-    handler: src/hybrid-lambda.handler
+    handler: src/simple-lambda.handler
     events:
       - http:
           path: /{proxy+}
