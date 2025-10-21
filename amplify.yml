@@ -5,15 +5,17 @@ frontend:
       commands:
         - cd frontend
         - npm ci
-        - cp .env.production .env
-        - echo "Environment file content:"
+        - echo "Setting up environment variables..."
+        - echo "VITE_API_BASE_URL=https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod" > .env
+        - echo "VITE_APP_NAME=Freehold Document Sharing" >> .env
+        - echo "NODE_ENV=production" >> .env
+        - echo "Environment file created:"
         - cat .env
-        - echo "Checking if VITE_API_BASE_URL is set:"
-        - grep VITE_API_BASE_URL .env || echo "VITE_API_BASE_URL not found"
     build:
       commands:
-        - echo "Building with environment:"
+        - echo "Building with environment variables:"
         - echo "VITE_API_BASE_URL=$VITE_API_BASE_URL"
+        - export VITE_API_BASE_URL=https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod
         - npx vite build
   artifacts:
     baseDirectory: frontend/dist
