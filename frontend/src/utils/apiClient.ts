@@ -9,7 +9,7 @@ const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'https://wdjv9gq946
 console.log('🔧 API Configuration:', {
   'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
   'Final API_BASE_URL': API_BASE_URL,
-  'Environment': import.meta.env.NODE_ENV
+  'Environment': import.meta.env['NODE_ENV']
 });
 
 // Create axios instance

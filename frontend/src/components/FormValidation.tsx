@@ -111,7 +111,7 @@ export function ValidatedTextField({
     <TextField
       {...props}
       error={hasError}
-      helperText={validation?.error || props.helperText}
+      helperText={validation?.error || (props as any).helperText}
       onChange={handleChange}
       onBlur={handleBlur}
       InputProps={{
@@ -201,7 +201,7 @@ export const validationRules = {
   },
   
   minLength: (min: number) => ({
-    validate: (value: string) => value && value.length >= min,
+    validate: (value: string) => !value || value.length >= min,
     message: `Must be at least ${min} characters long`,
   }),
   

@@ -40,7 +40,7 @@ describe('Configuration Validation', () => {
   it('should have correct environment configuration', () => {
     // Check that environment variables are accessible
     expect(import.meta.env.VITE_API_BASE_URL).toBeDefined();
-    expect(import.meta.env.VITE_APP_NAME).toBeDefined();
+    expect(import.meta.env['VITE_APP_NAME']).toBeDefined();
   });
 
   it('should have proper service configurations', () => {

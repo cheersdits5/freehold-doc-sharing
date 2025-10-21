@@ -11,8 +11,7 @@ const testUser = {
 };
 
 describe('End-to-End Workflow Tests', () => {
-  let authToken: string;
-  let testFileId: string;
+  // Test variables removed - not used in current implementation
 
   beforeAll(async () => {
     // Wait for server to be ready
