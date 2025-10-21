@@ -5,6 +5,13 @@ import { getErrorMessage } from '../contexts/ErrorContext';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod'}/api`;
 
+// Debug logging
+console.log('🔧 API Configuration:', {
+  'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
+  'Final API_BASE_URL': API_BASE_URL,
+  'Environment': import.meta.env.NODE_ENV
+});
+
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

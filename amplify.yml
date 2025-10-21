@@ -8,14 +8,13 @@ frontend:
         - echo "Setting up environment variables..."
         - echo "VITE_API_BASE_URL=https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod" > .env
         - echo "VITE_APP_NAME=Freehold Document Sharing" >> .env
-        - echo "NODE_ENV=production" >> .env
         - echo "Environment file created:"
         - cat .env
     build:
       commands:
         - echo "Building with environment variables:"
-        - echo "VITE_API_BASE_URL=$VITE_API_BASE_URL"
         - export VITE_API_BASE_URL=https://wdjv9gq946.execute-api.eu-west-2.amazonaws.com/prod
+        - echo "VITE_API_BASE_URL is now: $VITE_API_BASE_URL"
         - npx vite build
   artifacts:
     baseDirectory: frontend/dist

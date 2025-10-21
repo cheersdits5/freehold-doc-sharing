@@ -12,7 +12,6 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthSession } from '../hooks/useAuthSession';
 import { FileUpload, DocumentList } from '../components';
-import '../debug-api';
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
