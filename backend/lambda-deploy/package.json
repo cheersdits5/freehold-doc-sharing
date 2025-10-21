@@ -2,7 +2,7 @@
   "name": "freehold-api-lambda",
   "version": "1.0.0",
   "description": "Freehold Document Sharing API Lambda Function",
-  "main": "simple-lambda.js",
+  "main": "simple-working-index.js",
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
