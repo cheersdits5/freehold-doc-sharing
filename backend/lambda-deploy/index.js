@@ -48,35 +48,9 @@ const log = {
 
 const app = express();
 
-// Enable CORS with comprehensive configuration
+// Simplified CORS configuration - allow all origins for debugging
 app.use(cors({
-  origin: function (origin, callback) {
-    log.info('CORS request from origin:', { origin });
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow localhost for development
-    if (origin.includes('localhost')) return callback(null, true);
-    
-    // Allow all Amplify domains
-    if (origin.includes('amplifyapp.com')) return callback(null, true);
-    
-    // Specifically allow your domain
-    const allowedDomains = [
-      'https://main.d2n7j8wrtqbawq.amplifyapp.com',
-      'https://main.amplifyapp.com',
-      'https://freehold-document-sharing.amplifyapp.com'
-    ];
-    
-    if (allowedDomains.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // For debugging - allow all for now
-    log.info('Allowing CORS for origin:', { origin });
-    return callback(null, true);
-  },
+  origin: true, // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
@@ -117,14 +91,14 @@ app.use((req, res, next) => {
     headers: Object.keys(req.headers)
   });
 
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', origin || '*');
+  // Set CORS headers explicitly
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent');
   res.header('Access-Control-Allow-Credentials', 'true');
   
   if (req.method === 'OPTIONS') {
-    log.info('Handling OPTIONS preflight request');
+    log.info('Handling OPTIONS preflight request for:', req.path);
     res.status(200).end();
     return;
   }
