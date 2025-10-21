@@ -109,12 +109,22 @@ app.use((req, res, next) => {
 
 // Add response headers for API Gateway
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  log.info('Request received', { 
+    method: req.method, 
+    path: req.path, 
+    origin: origin,
+    headers: Object.keys(req.headers)
+  });
+
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent');
   res.header('Access-Control-Allow-Credentials', 'true');
   
   if (req.method === 'OPTIONS') {
+    log.info('Handling OPTIONS preflight request');
     res.status(200).end();
     return;
   }
@@ -398,13 +408,19 @@ app.post('/api/files/upload', async (req, res) => {
         
       } catch (error) {
         log.error('Upload processing error', error);
-        res.status(500).json({ error: 'Upload failed: ' + error.message });
+        res.status(500).json({ 
+          error: 'Upload failed: ' + error.message,
+          details: error.stack
+        });
       }
     });
     
   } catch (error) {
     log.error('Upload setup error', error);
-    res.status(500).json({ error: 'Upload setup failed: ' + error.message });
+    res.status(500).json({ 
+      error: 'Upload setup failed: ' + error.message,
+      details: error.stack
+    });
   }
 });
 
@@ -430,7 +446,10 @@ app.use((error, req, res, next) => {
 app.use('*', (req, res) => {
   log.warn('Endpoint not found', {
     path: req.path,
+    originalUrl: req.originalUrl,
     method: req.method,
+    query: req.query,
+    params: req.params,
     userAgent: req.headers['user-agent']
   });
   
@@ -439,6 +458,14 @@ app.use('*', (req, res) => {
       code: 'NOT_FOUND',
       message: 'Endpoint not found',
       path: req.path,
+      originalUrl: req.originalUrl,
+      method: req.method,
+      availableEndpoints: [
+        'GET /api/files',
+        'POST /api/files/upload',
+        'GET /api/categories',
+        'POST /api/auth/login'
+      ],
       timestamp: new Date().toISOString()
     }
   });
