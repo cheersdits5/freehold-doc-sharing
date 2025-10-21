@@ -51,17 +51,20 @@ const app = express();
 // Enable CORS with comprehensive configuration
 app.use(cors({
   origin: function (origin, callback) {
+    log.info('CORS request from origin:', { origin });
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     // Allow localhost for development
     if (origin.includes('localhost')) return callback(null, true);
     
-    // Allow Amplify domains
+    // Allow all Amplify domains
     if (origin.includes('amplifyapp.com')) return callback(null, true);
     
-    // Allow custom domains (add your domain here)
+    // Specifically allow your domain
     const allowedDomains = [
+      'https://main.d2n7j8wrtqbawq.amplifyapp.com',
       'https://main.amplifyapp.com',
       'https://freehold-document-sharing.amplifyapp.com'
     ];
@@ -70,8 +73,9 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // For production, you might want to be more restrictive
-    return callback(null, true); // Allow all for now
+    // For debugging - allow all for now
+    log.info('Allowing CORS for origin:', { origin });
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -278,8 +282,15 @@ app.get('/api/files', async (req, res) => {
 
 // Real file upload with S3 integration
 app.post('/api/files/upload', async (req, res) => {
+  log.info('Upload request received', { 
+    headers: req.headers,
+    contentType: req.headers['content-type'],
+    origin: req.headers.origin
+  });
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer mock-jwt-token')) {
+    log.warn('Upload authentication failed', { authHeader });
     return res.status(401).json({ error: 'Authentication required' });
   }
 
